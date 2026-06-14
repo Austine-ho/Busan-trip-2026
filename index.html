@@ -155,10 +155,8 @@
                     </div>
 
                     <div v-for="(item, index) in currentItinerary" :key="item.id" class="relative" :data-id="item.id">
-                        <!-- 修正: 點擊整張卡片導向 Google Maps -->
                         <div class="card-minimal p-4 flex items-start gap-3 relative z-10 bg-white group cursor-pointer" @click="openGoogleMaps(item.name)">
                             <div class="flex flex-col items-center mt-1">
-                                <!-- 點擊 drag handle 不觸發外層跳轉 (.stop) -->
                                 <div class="drag-handle w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-500 mb-1 active:scale-95 transition-transform" @click.stop>
                                     <i :class="getCategoryIcon(item.category)"></i>
                                 </div>
@@ -168,7 +166,6 @@
                             <div class="flex-1 min-w-0">
                                 <div class="flex justify-between items-start">
                                     <h3 class="font-bold text-slate-800 text-lg truncate">{{ item.name }}</h3>
-                                    <!-- 點擊編輯按鈕不觸發外層跳轉 (.stop) -->
                                     <button @click.stop="editItineraryItem(item)" class="text-slate-300 hover:text-blue-500 p-1">
                                         <i class="fas fa-ellipsis-v"></i>
                                     </button>
@@ -225,7 +222,6 @@
                         <i class="fas fa-chevron-right text-slate-300"></i>
                         <div class="flex-1 relative">
                             <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">NT$</span>
-                            <!-- 計算屬性動態輸出 -->
                             <div class="w-full bg-slate-100 border border-transparent rounded-xl py-3 pl-8 pr-3 text-right font-bold text-blue-600">{{ computedTwdAmount }}</div>
                         </div>
                     </div>
@@ -343,12 +339,9 @@
                 </div>
 
                 <div v-for="(qr, index) in qrCodes" :key="qr.id" class="card-minimal p-4">
+                    <!-- 標題區域 (移除右側按鈕) -->
                     <div class="flex justify-between items-center mb-3">
-                        <input v-model="qr.name" class="font-bold text-lg bg-transparent border-b border-transparent hover:border-slate-200 focus:border-blue-400 focus:outline-none px-1 py-0.5" placeholder="輸入持有人名稱">
-                        <div class="flex gap-2">
-                            <button @click="triggerReplaceQr(index)" class="text-slate-400 hover:text-blue-500 w-8 h-8 flex justify-center items-center rounded-full hover:bg-slate-50" title="更換憑證圖片"><i class="fas fa-edit"></i></button>
-                            <button @click="deleteQr(index)" class="text-slate-400 hover:text-red-400 w-8 h-8 flex justify-center items-center rounded-full hover:bg-slate-50" title="刪除"><i class="fas fa-trash-alt"></i></button>
-                        </div>
+                        <input v-model="qr.name" class="w-full font-bold text-lg bg-transparent border-b border-transparent hover:border-slate-200 focus:border-blue-400 focus:outline-none px-1 py-0.5" placeholder="輸入持有人名稱">
                     </div>
                     
                     <div class="w-full aspect-square bg-slate-50 rounded-xl mb-4 overflow-hidden border border-slate-100 flex items-center justify-center">
@@ -383,6 +376,16 @@
                                 <input type="checkbox" v-model="qr.blue3" class="w-5 h-5 rounded border-slate-300 text-blue-500 focus:ring-blue-500 accent-blue-500">
                                 <span class="text-sm">項目 3</span>
                             </label>
+                        </div>
+
+                        <!-- 將編輯與刪除按鈕移到這裡，並優化 UI -->
+                        <div class="flex justify-end gap-3 pt-3 mt-2 border-t border-slate-50">
+                            <button @click="triggerReplaceQr(index)" class="flex items-center gap-1.5 text-sm text-slate-500 hover:text-blue-600 bg-slate-50 hover:bg-blue-50 px-4 py-1.5 rounded-full transition-colors font-medium">
+                                <i class="fas fa-image"></i> 更換圖片
+                            </button>
+                            <button @click="deleteQr(index)" class="flex items-center gap-1.5 text-sm text-slate-500 hover:text-red-600 bg-slate-50 hover:bg-red-50 px-4 py-1.5 rounded-full transition-colors font-medium">
+                                <i class="fas fa-trash-alt"></i> 刪除
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -773,7 +776,6 @@
 
                 const selectDate = (index) => { currentDateIndex.value = index; };
                 
-                // 核心修復：正確的 Google Maps 搜尋網址
                 const openGoogleMaps = (query) => { 
                     window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('釜山 ' + query)}`, '_blank'); 
                 };
