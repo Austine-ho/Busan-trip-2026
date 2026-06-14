@@ -76,10 +76,12 @@
 <body class="text-slate-800 antialiased max-w-md mx-auto bg-white shadow-2xl overflow-x-hidden relative h-[100dvh] flex flex-col">
     <div id="app" class="flex flex-col h-full overflow-hidden relative">
         
+        <!-- 全局提醒 Toast -->
         <div v-if="toastMsg" class="toast" :style="{ opacity: toastMsg ? 1 : 0 }">
             <i class="fas fa-bell mr-2 text-yellow-300"></i> {{ toastMsg }}
         </div>
 
+        <!-- Header 區塊 -->
         <header class="relative w-full h-[250px] shrink-0 bg-[#eef6fa]">
             <div class="absolute inset-0 bg-cover bg-bottom" style="background-image: url('background.png');"></div>
             
@@ -94,6 +96,7 @@
 
         <main class="relative -mt-6 bg-[#eef6fa] rounded-t-[30px] flex-1 z-10 overflow-y-auto no-scrollbar pb-24 shadow-[0_-10px_20px_rgba(0,0,0,0.05)]">
             
+            <!-- ====== 1. 行程表 ====== -->
             <div v-show="activeTab === 'itinerary'" class="p-5">
                 <div class="flex items-center justify-between mb-4 bg-white/60 backdrop-blur rounded-2xl p-3 px-4 shadow-sm">
                     <div class="flex items-center space-x-3 text-slate-700">
@@ -203,7 +206,9 @@
                 </button>
             </div>
 
+            <!-- ====== 2. 資訊 ====== -->
             <div v-show="activeTab === 'info'" class="p-5 space-y-6">
+                <!-- 匯率換算 -->
                 <div class="card-minimal p-5">
                     <div class="flex items-center gap-2 mb-4">
                         <i class="fas fa-exchange-alt text-blue-500 bg-blue-50 p-2 rounded-full"></i>
@@ -212,17 +217,24 @@
                     <div class="flex items-center justify-between gap-4">
                         <div class="flex-1 relative">
                             <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₩</span>
-                            <input type="number" v-model="krwAmount" @input="calcExchange" class="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 pl-8 pr-3 text-right focus:outline-none focus:border-blue-300" placeholder="韓元">
+                            <input type="number" v-model.number="krwAmount" class="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 pl-8 pr-3 text-right focus:outline-none focus:border-blue-300" placeholder="韓元">
                         </div>
                         <i class="fas fa-chevron-right text-slate-300"></i>
                         <div class="flex-1 relative">
                             <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">NT$</span>
-                            <div class="w-full bg-slate-100 border border-transparent rounded-xl py-3 pl-8 pr-3 text-right font-bold text-blue-600">{{ twdAmount }}</div>
+                            <!-- 改為由計算屬性動態輸出 -->
+                            <div class="w-full bg-slate-100 border border-transparent rounded-xl py-3 pl-8 pr-3 text-right font-bold text-blue-600">{{ computedTwdAmount }}</div>
                         </div>
                     </div>
-                    <div class="text-right text-[10px] text-slate-400 mt-2">參考匯率: 1 KRW ≈ {{ exchangeRate }} TWD</div>
+                    <!-- 核心修改：將參考匯率文字改為可點擊輸入的 Input Box -->
+                    <div class="flex items-center justify-end gap-2 mt-4 text-xs text-slate-500">
+                        <span>設定目前匯率: 1 KRW ＝ </span>
+                        <input type="number" step="0.0001" v-model.number="exchangeRate" class="w-20 bg-slate-50 border border-slate-200 rounded-lg py-1 px-2 text-center text-blue-600 font-bold focus:outline-none focus:border-blue-400">
+                        <span>TWD</span>
+                    </div>
                 </div>
 
+                <!-- 航班資訊 -->
                 <div class="card-minimal overflow-hidden">
                     <div class="bg-[#1e293b] p-4 text-white">
                         <div class="flex items-center gap-2 mb-1">
@@ -276,6 +288,7 @@
                     </div>
                 </div>
 
+                <!-- 住宿資訊 -->
                 <div class="card-minimal p-5">
                     <div class="flex items-center justify-between mb-4">
                         <div class="flex items-center gap-2">
@@ -285,13 +298,14 @@
                         <button @click="openGoogleMaps('Seomyeon Denbasta Central Hotel')" class="text-blue-500 text-sm bg-blue-50 px-3 py-1 rounded-full"><i class="fas fa-map-marker-alt mr-1"></i>導航</button>
                     </div>
                     <h3 class="font-bold text-slate-800">Seomyeon Denbasta Central Hotel</h3>
-                    <p class="text-sm text-slate-500 mb-2">서면덴바스타센트럴호텔</p>
+                    <p class="text-sm text-slate-500 mb-2">서면덴바스타센特爾酒店</p>
                     <div class="text-sm text-slate-600 flex items-start gap-2 mt-3">
                         <i class="fas fa-map-pin mt-1 text-slate-400"></i>
                         <span>釜山鎮區 (Busanjin-gu), 釜山</span>
                     </div>
                 </div>
 
+                <!-- 緊急聯絡 -->
                 <div class="flex gap-4">
                     <div class="card-minimal p-4 flex-1 flex flex-col items-center justify-center text-center cursor-pointer" @click="callNumber('112')">
                         <div class="w-12 h-12 rounded-full bg-red-50 text-red-500 flex items-center justify-center text-xl mb-2">
@@ -310,6 +324,7 @@
                 </div>
             </div>
 
+            <!-- ====== 3. 票卷資訊 ====== -->
             <div v-show="activeTab === 'tickets'" class="p-5 space-y-4">
                 <div class="card-minimal overflow-hidden">
                     <img src="ticket.png" alt="Visit Busan Pass" class="w-full h-auto">
@@ -375,6 +390,7 @@
                 </div>
             </div>
 
+            <!-- ====== 4. 美食清單 ====== -->
             <div v-show="activeTab === 'food'" class="p-5">
                  <div class="flex justify-between items-center mb-4">
                     <h2 class="font-bold text-lg text-slate-800">必吃美食</h2>
@@ -404,6 +420,7 @@
                 </div>
             </div>
 
+            <!-- ====== 5. 購物清單 ====== -->
             <div v-show="activeTab === 'shopping'" class="p-5">
                 <div class="grid grid-cols-2 gap-4">
                     <div v-for="(item, index) in shoppingList" :key="item.id" class="card-minimal overflow-hidden relative">
@@ -430,11 +447,14 @@
                 </button>
             </div>
 
+            <!-- ====== 6. 花費 ====== -->
             <div v-show="activeTab === 'expenses'" class="p-5">
+                <!-- 總花費 -->
                 <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-3xl p-6 shadow-lg shadow-blue-500/30 mb-6 relative overflow-hidden">
                     <div class="absolute -right-10 -top-10 text-white/10 text-9xl"><i class="fas fa-won-sign"></i></div>
                     <div class="text-blue-100 text-sm mb-1">總花費 (KRW)</div>
                     <div class="text-4xl font-bold tracking-tight">₩ {{ totalExpenses.toLocaleString() }}</div>
+                    <!-- 核心修改：此處的 NT$ 計算會隨著上方調整的變動匯率即時刷新 -->
                     <div class="text-blue-200 text-xs mt-2 text-right">約 NT$ {{ Math.round(totalExpenses * exchangeRate).toLocaleString() }}</div>
                 </div>
 
@@ -462,6 +482,7 @@
             </div>
         </main>
 
+        <!-- ================= Modals ================= -->
         <transition name="modal">
             <div v-if="modals.itinerary" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm" @click.self="closeModal('itinerary')">
                 <transition name="modal-content">
@@ -679,7 +700,6 @@
                 const sortableList = ref(null);
                 let sortableInstance = null;
 
-                // 核心修改 1：加入 JSON.parse(JSON.stringify(...)) 深拷貝，確保預設資料永遠乾淨
                 const loadData = (key, defaultData) => {
                     const saved = localStorage.getItem(`busanApp_${key}`);
                     return saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(defaultData));
@@ -691,11 +711,22 @@
                 const expenseList = ref(loadData('expense', []));
                 const qrCodes = ref(loadData('qr', []));
 
+                // 核心連動修改：從儲存區抓取自訂匯率，沒有就預設為 0.024
+                const exchangeRate = ref(Number(localStorage.getItem('busanApp_exchangeRate')) || 0.024);
+                const krwAmount = ref(10000);
+
+                // 計算屬性：即時換算目前的台幣金額
+                const computedTwdAmount = computed(() => {
+                    return Math.round((krwAmount.value || 0) * exchangeRate.value).toLocaleString();
+                });
+
                 watch(itineraryData, (val) => localStorage.setItem('busanApp_itinerary', JSON.stringify(val)), { deep: true });
                 watch(foodList, (val) => localStorage.setItem('busanApp_food', JSON.stringify(val)), { deep: true });
                 watch(shoppingList, (val) => localStorage.setItem('busanApp_shopping', JSON.stringify(val)), { deep: true });
                 watch(expenseList, (val) => localStorage.setItem('busanApp_expense', JSON.stringify(val)), { deep: true });
                 watch(qrCodes, (val) => localStorage.setItem('busanApp_qr', JSON.stringify(val)), { deep: true });
+                // 監聽並保存自訂匯率
+                watch(exchangeRate, (val) => localStorage.setItem('busanApp_exchangeRate', val));
 
                 const currentItinerary = computed(() => itineraryData.value[currentDateIndex.value] || []);
                 const currentWeather = computed(() => dates.value[currentDateIndex.value].weather);
@@ -821,11 +852,6 @@
                     return map[cat] || 'fas fa-circle';
                 };
 
-                const exchangeRate = ref(0.024);
-                const krwAmount = ref(10000);
-                const twdAmount = ref(240);
-                const calcExchange = () => { twdAmount.value = Math.round((krwAmount.value || 0) * exchangeRate.value); };
-
                 const formFood = reactive({ name: '', note: '' });
                 const openAddFoodModal = () => {
                     Object.assign(formFood, { name: '', note: '' });
@@ -860,7 +886,6 @@
                 };
                 const deleteShopping = (idx) => { if(confirm('刪除此物品？')) shoppingList.value.splice(idx, 1); };
 
-                // 核心修改 2：票券資訊新增「編輯(替換)圖片」邏輯
                 const qrReplaceInput = ref(null);
                 const editingQrIndex = ref(null);
 
@@ -876,8 +901,8 @@
                         reader.onload = (evt) => {
                             if (editingQrIndex.value !== null) {
                                 qrCodes.value[editingQrIndex.value].image = evt.target.result;
-                                editingQrIndex.value = null; // 歸零狀態
-                                e.target.value = ''; // 清空 input 以便下次能選同一張圖
+                                editingQrIndex.value = null;
+                                e.target.value = '';
                             }
                         };
                         reader.readAsDataURL(file);
@@ -931,14 +956,14 @@
                     modals, closeModal, showToast, toastMsg,
                     formItinerary, isEditingItinerary, openAddItineraryModal, editItineraryItem, saveItinerary, confirmDeleteItinerary,
                     transitModes, formTransit, editTransit, saveTransit,
-                    exchangeRate, krwAmount, twdAmount, calcExchange,
+                    
+                    // 匯率與新連動屬性
+                    exchangeRate, krwAmount, computedTwdAmount,
+                    
                     foodList, formFood, openAddFoodModal, saveFood, deleteFood,
                     shoppingList, formShopping, openAddShoppingModal, handleShopUpload, saveShopping, deleteShopping,
-                    
-                    // 票卷新增的回傳
                     qrCodes, handleQrUpload, deleteQr,
                     qrReplaceInput, triggerReplaceQr, handleQrReplace,
-                    
                     expenseList, expenseCategories, formExpense, totalExpenses, openAddExpenseModal, saveExpense, deleteExpense, getExpenseIcon, getExpenseColor
                 };
             }
