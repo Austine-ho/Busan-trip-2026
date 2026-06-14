@@ -20,7 +20,7 @@
                             500: '#3b82f6',
                             900: '#1e3a8a',
                         },
-                        bgLight: '#eef6fa', // 延伸圖片底色
+                        bgLight: '#eef6fa',
                     },
                     fontFamily: {
                         sans: ['"Noto Sans TC"', 'sans-serif'],
@@ -33,22 +33,15 @@
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
         
         body {
-            background-color: #eef6fa; /* 與 Banner 延伸的底色 */
+            background-color: #eef6fa;
             font-family: 'Noto Sans TC', sans-serif;
             -webkit-tap-highlight-color: transparent;
             overscroll-behavior-y: none;
         }
 
-        /* 隱藏捲軸但可滑動 */
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* 圓潤卡片與陰影 (日系極簡) */
         .card-minimal {
             background: white;
             border-radius: 20px;
@@ -56,34 +49,15 @@
             border: 1px solid rgba(0,0,0,0.02);
         }
 
-        .tab-active {
-            color: #3b82f6;
-            background: #e0f0fe;
-        }
+        .tab-active { color: #3b82f6; background: #e0f0fe; }
+        .drag-handle { cursor: grab; }
+        .sortable-ghost { opacity: 0.4; background-color: #f3f4f6; }
 
-        .drag-handle {
-            cursor: grab;
-        }
-        .sortable-ghost {
-            opacity: 0.4;
-            background-color: #f3f4f6;
-        }
+        .modal-enter-active, .modal-leave-active { transition: opacity 0.3s ease; }
+        .modal-enter-from, .modal-leave-to { opacity: 0; }
+        .modal-content-enter-active, .modal-content-leave-active { transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .modal-content-enter-from, .modal-content-leave-to { transform: translateY(100%); }
 
-        /* 彈出視窗動畫 */
-        .modal-enter-active, .modal-leave-active {
-            transition: opacity 0.3s ease;
-        }
-        .modal-enter-from, .modal-leave-to {
-            opacity: 0;
-        }
-        .modal-content-enter-active, .modal-content-leave-active {
-            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        .modal-content-enter-from, .modal-content-leave-to {
-            transform: translateY(100%);
-        }
-
-        /* 提示框 */
         .toast {
             position: fixed;
             top: 20px;
@@ -102,17 +76,13 @@
 <body class="text-slate-800 antialiased max-w-md mx-auto bg-white shadow-2xl overflow-x-hidden relative h-[100dvh] flex flex-col">
     <div id="app" class="flex flex-col h-full overflow-hidden relative">
         
-        <!-- 全局提醒 Toast -->
         <div v-if="toastMsg" class="toast" :style="{ opacity: toastMsg ? 1 : 0 }">
             <i class="fas fa-bell mr-2 text-yellow-300"></i> {{ toastMsg }}
         </div>
 
-        <!-- Header 區塊 -->
         <header class="relative w-full h-[250px] shrink-0 bg-[#eef6fa]">
-            <!-- Banner 圖片 -->
             <div class="absolute inset-0 bg-cover bg-bottom" style="background-image: url('background.png');"></div>
             
-            <!-- 浮動 Tabs (置於右下角) -->
             <div class="absolute bottom-10 right-4 bg-white/90 backdrop-blur-md rounded-full p-1.5 shadow-lg flex space-x-1 z-20 border border-white/50">
                 <button v-for="tab in tabs" :key="tab.id" @click="activeTab = tab.id"
                         class="w-10 h-10 rounded-full flex items-center justify-center transition-colors duration-200 text-slate-400"
@@ -122,12 +92,9 @@
             </div>
         </header>
 
-        <!-- 主內容區域 (利用負邊距向上拉，創造圓弧銜接) -->
         <main class="relative -mt-6 bg-[#eef6fa] rounded-t-[30px] flex-1 z-10 overflow-y-auto no-scrollbar pb-24 shadow-[0_-10px_20px_rgba(0,0,0,0.05)]">
             
-            <!-- ====== 1. 行程表 ====== -->
             <div v-show="activeTab === 'itinerary'" class="p-5">
-                <!-- 天氣資訊 -->
                 <div class="flex items-center justify-between mb-4 bg-white/60 backdrop-blur rounded-2xl p-3 px-4 shadow-sm">
                     <div class="flex items-center space-x-3 text-slate-700">
                         <i :class="currentWeather.icon + ' text-2xl text-yellow-500'"></i>
@@ -141,7 +108,6 @@
                     </div>
                 </div>
 
-                <!-- 橫向日期滑動選單 -->
                 <div class="flex space-x-3 overflow-x-auto no-scrollbar pb-2 mb-4">
                     <button v-for="(day, index) in dates" :key="day.date" 
                             @click="selectDate(index)"
@@ -152,9 +118,7 @@
                     </button>
                 </div>
 
-                <!-- 行程列表 (可拖曳) -->
                 <div ref="sortableList" class="space-y-0 relative">
-                    <!-- 第一天的航班特殊顯示 -->
                     <div v-if="currentDateIndex === 0" class="mb-4">
                         <div class="bg-[#1e293b] text-white rounded-2xl p-4 shadow-lg relative overflow-hidden">
                             <div class="absolute top-0 right-0 w-24 h-24 bg-blue-500 rounded-full blur-3xl opacity-20 -mr-10 -mt-10"></div>
@@ -178,7 +142,6 @@
                             </div>
                         </div>
                         
-                        <!-- 交通時間 (從機場到下一個地點) -->
                         <div class="flex flex-col items-center justify-center my-1 relative h-10">
                             <div class="w-0.5 h-full bg-slate-200 absolute"></div>
                             <div class="bg-[#eef6fa] z-10 px-2 flex items-center space-x-2 text-xs text-slate-400 border border-slate-200 rounded-full bg-white shadow-sm py-1 cursor-pointer" @click="editTransit(0, 0)">
@@ -189,10 +152,7 @@
                     </div>
 
                     <div v-for="(item, index) in currentItinerary" :key="item.id" class="relative" :data-id="item.id">
-                        <!-- 行程卡片 -->
                         <div class="card-minimal p-4 flex items-start gap-3 relative z-10 bg-white group cursor-pointer" @click="openGoogleMaps(item.name)">
-                            
-                            <!-- 拖曳手把與圖標 -->
                             <div class="flex flex-col items-center mt-1">
                                 <div class="drag-handle w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-500 mb-1 active:scale-95 transition-transform" @click.stop>
                                     <i :class="getCategoryIcon(item.category)"></i>
@@ -200,11 +160,9 @@
                                 <span class="text-[10px] text-slate-400 font-medium">{{ item.time }}</span>
                             </div>
 
-                            <!-- 內容 -->
                             <div class="flex-1 min-w-0">
                                 <div class="flex justify-between items-start">
                                     <h3 class="font-bold text-slate-800 text-lg truncate">{{ item.name }}</h3>
-                                    <!-- 編輯按鈕 -->
                                     <button @click.stop="editItineraryItem(item)" class="text-slate-300 hover:text-blue-500 p-1">
                                         <i class="fas fa-ellipsis-v"></i>
                                     </button>
@@ -225,7 +183,6 @@
                             </div>
                         </div>
 
-                        <!-- 交通時間連接線 (如果不是最後一個) -->
                         <div v-if="index < currentItinerary.length - 1" class="flex flex-col items-center justify-center my-1 relative h-10">
                             <div class="w-0.5 h-full bg-slate-200 absolute"></div>
                             <div class="bg-[#eef6fa] z-10 px-2 flex items-center space-x-2 text-xs text-slate-400 border border-slate-200 rounded-full bg-white shadow-sm py-1 cursor-pointer" @click="editTransit(currentDateIndex, index + 1)">
@@ -235,22 +192,18 @@
                         </div>
                     </div>
                     
-                    <!-- 沒行程時顯示 -->
                     <div v-if="currentItinerary.length === 0 && currentDateIndex !== 0" class="text-center py-10 text-slate-400">
                         <i class="fas fa-box-open text-4xl mb-2 opacity-50"></i>
                         <p>這天還沒有安排行程喔！</p>
                     </div>
                 </div>
 
-                <!-- FAB 新增按鈕 -->
                 <button @click="openAddItineraryModal" class="fixed bottom-6 right-6 w-14 h-14 bg-blue-500 text-white rounded-full shadow-lg shadow-blue-500/30 flex items-center justify-center text-2xl hover:bg-blue-600 transition-transform active:scale-90 z-40">
                     <i class="fas fa-plus"></i>
                 </button>
             </div>
 
-            <!-- ====== 2. 資訊 ====== -->
             <div v-show="activeTab === 'info'" class="p-5 space-y-6">
-                <!-- 匯率換算 -->
                 <div class="card-minimal p-5">
                     <div class="flex items-center gap-2 mb-4">
                         <i class="fas fa-exchange-alt text-blue-500 bg-blue-50 p-2 rounded-full"></i>
@@ -270,7 +223,6 @@
                     <div class="text-right text-[10px] text-slate-400 mt-2">參考匯率: 1 KRW ≈ {{ exchangeRate }} TWD</div>
                 </div>
 
-                <!-- 航班資訊 -->
                 <div class="card-minimal overflow-hidden">
                     <div class="bg-[#1e293b] p-4 text-white">
                         <div class="flex items-center gap-2 mb-1">
@@ -280,7 +232,6 @@
                         <p class="text-xs text-slate-400">RJ8754 | 3名 | 往返</p>
                     </div>
                     <div class="p-4 space-y-6 bg-white">
-                        <!-- 去程 -->
                         <div class="relative">
                             <div class="mb-2"><span class="bg-[#a3e635] text-slate-900 text-xs font-bold px-2 py-0.5 rounded">區間 1</span> <span class="font-bold ml-2">LJ752</span></div>
                             <div class="flex justify-between items-center text-sm">
@@ -301,9 +252,7 @@
                                 </div>
                             </div>
                         </div>
-                        <!-- 分隔線 -->
                         <div class="border-t border-slate-100"></div>
-                        <!-- 回程 -->
                         <div class="relative">
                             <div class="mb-2"><span class="bg-[#a3e635] text-slate-900 text-xs font-bold px-2 py-0.5 rounded">區間 2</span> <span class="font-bold ml-2">LJ751</span></div>
                             <div class="flex justify-between items-center text-sm">
@@ -327,7 +276,6 @@
                     </div>
                 </div>
 
-                <!-- 住宿資訊 -->
                 <div class="card-minimal p-5">
                     <div class="flex items-center justify-between mb-4">
                         <div class="flex items-center gap-2">
@@ -344,7 +292,6 @@
                     </div>
                 </div>
 
-                <!-- 緊急聯絡 -->
                 <div class="flex gap-4">
                     <div class="card-minimal p-4 flex-1 flex flex-col items-center justify-center text-center cursor-pointer" @click="callNumber('112')">
                         <div class="w-12 h-12 rounded-full bg-red-50 text-red-500 flex items-center justify-center text-xl mb-2">
@@ -363,27 +310,28 @@
                 </div>
             </div>
 
-            <!-- ====== 3. 票卷資訊 ====== -->
             <div v-show="activeTab === 'tickets'" class="p-5 space-y-4">
-                <!-- 參考圖 -->
                 <div class="card-minimal overflow-hidden">
                     <img src="ticket.png" alt="Visit Busan Pass" class="w-full h-auto">
                 </div>
 
                 <div class="flex justify-between items-center px-1">
                     <h2 class="font-bold text-lg text-slate-800">我的 QR Codes</h2>
-                    <!-- 隱藏的 input file -->
                     <input type="file" ref="qrInput" accept="image/*" class="hidden" @change="handleQrUpload">
+                    <input type="file" ref="qrReplaceInput" accept="image/*" class="hidden" @change="handleQrReplace">
+                    
                     <button @click="$refs.qrInput.click()" class="text-blue-500 bg-blue-50 px-3 py-1.5 rounded-full text-sm font-medium">
                         <i class="fas fa-upload mr-1"></i> 上傳憑證
                     </button>
                 </div>
 
-                <!-- QR Code 列表 -->
                 <div v-for="(qr, index) in qrCodes" :key="qr.id" class="card-minimal p-4">
                     <div class="flex justify-between items-center mb-3">
                         <input v-model="qr.name" class="font-bold text-lg bg-transparent border-b border-transparent hover:border-slate-200 focus:border-blue-400 focus:outline-none px-1 py-0.5" placeholder="輸入持有人名稱">
-                        <button @click="deleteQr(index)" class="text-slate-300 hover:text-red-400"><i class="fas fa-trash-alt"></i></button>
+                        <div class="flex gap-2">
+                            <button @click="triggerReplaceQr(index)" class="text-slate-400 hover:text-blue-500 w-8 h-8 flex justify-center items-center rounded-full hover:bg-slate-50" title="更換憑證圖片"><i class="fas fa-edit"></i></button>
+                            <button @click="deleteQr(index)" class="text-slate-400 hover:text-red-400 w-8 h-8 flex justify-center items-center rounded-full hover:bg-slate-50" title="刪除"><i class="fas fa-trash-alt"></i></button>
+                        </div>
                     </div>
                     
                     <div class="w-full aspect-square bg-slate-50 rounded-xl mb-4 overflow-hidden border border-slate-100 flex items-center justify-center">
@@ -391,7 +339,6 @@
                         <i v-else class="fas fa-qrcode text-6xl text-slate-200"></i>
                     </div>
 
-                    <!-- 使用項目打勾 -->
                     <div class="space-y-3">
                         <div class="text-xs font-bold text-slate-500 uppercase tracking-wider">Purple (選2項)</div>
                         <div class="flex gap-4">
@@ -428,7 +375,6 @@
                 </div>
             </div>
 
-            <!-- ====== 4. 美食清單 ====== -->
             <div v-show="activeTab === 'food'" class="p-5">
                  <div class="flex justify-between items-center mb-4">
                     <h2 class="font-bold text-lg text-slate-800">必吃美食</h2>
@@ -458,7 +404,6 @@
                 </div>
             </div>
 
-            <!-- ====== 5. 購物清單 ====== -->
             <div v-show="activeTab === 'shopping'" class="p-5">
                 <div class="grid grid-cols-2 gap-4">
                     <div v-for="(item, index) in shoppingList" :key="item.id" class="card-minimal overflow-hidden relative">
@@ -480,15 +425,12 @@
                     <p>還沒有想買的東西</p>
                 </div>
 
-                 <!-- FAB 新增購物 -->
-                <button @click="openAddShoppingModal" class="fixed bottom-6 right-6 w-14 h-14 bg-pink-500 text-white rounded-full shadow-lg shadow-pink-500/30 flex items-center justify-center text-2xl hover:bg-pink-600 transition-transform active:scale-90 z-40">
+                 <button @click="openAddShoppingModal" class="fixed bottom-6 right-6 w-14 h-14 bg-pink-500 text-white rounded-full shadow-lg shadow-pink-500/30 flex items-center justify-center text-2xl hover:bg-pink-600 transition-transform active:scale-90 z-40">
                     <i class="fas fa-plus"></i>
                 </button>
             </div>
 
-            <!-- ====== 6. 花費 ====== -->
             <div v-show="activeTab === 'expenses'" class="p-5">
-                <!-- 總花費 -->
                 <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-3xl p-6 shadow-lg shadow-blue-500/30 mb-6 relative overflow-hidden">
                     <div class="absolute -right-10 -top-10 text-white/10 text-9xl"><i class="fas fa-won-sign"></i></div>
                     <div class="text-blue-100 text-sm mb-1">總花費 (KRW)</div>
@@ -496,7 +438,6 @@
                     <div class="text-blue-200 text-xs mt-2 text-right">約 NT$ {{ Math.round(totalExpenses * exchangeRate).toLocaleString() }}</div>
                 </div>
 
-                <!-- 記錄列表 -->
                 <div class="space-y-3">
                     <div v-for="(exp, index) in expenseList" :key="exp.id" class="card-minimal p-4 flex items-center gap-3">
                         <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0" :class="getExpenseColor(exp.category)">
@@ -515,16 +456,12 @@
                     </div>
                 </div>
                 
-                <!-- FAB 新增花費 -->
                 <button @click="openAddExpenseModal" class="fixed bottom-6 right-6 w-14 h-14 bg-green-500 text-white rounded-full shadow-lg shadow-green-500/30 flex items-center justify-center text-2xl hover:bg-green-600 transition-transform active:scale-90 z-40">
                     <i class="fas fa-plus"></i>
                 </button>
             </div>
         </main>
 
-        <!-- ================= Modals ================= -->
-        
-        <!-- 行程 Modal -->
         <transition name="modal">
             <div v-if="modals.itinerary" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm" @click.self="closeModal('itinerary')">
                 <transition name="modal-content">
@@ -579,7 +516,6 @@
             </div>
         </transition>
 
-        <!-- 交通時間 Modal -->
         <transition name="modal">
             <div v-if="modals.transit" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" @click.self="modals.transit = false">
                 <div class="bg-white w-5/6 max-w-sm rounded-3xl p-6 shadow-2xl">
@@ -598,7 +534,6 @@
             </div>
         </transition>
 
-        <!-- 美食 Modal -->
         <transition name="modal">
             <div v-if="modals.food" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm" @click.self="modals.food = false">
                 <div class="bg-white w-full sm:w-96 rounded-t-3xl sm:rounded-3xl p-6 pb-8 shadow-2xl">
@@ -612,7 +547,6 @@
             </div>
         </transition>
 
-        <!-- 購物 Modal -->
         <transition name="modal">
             <div v-if="modals.shopping" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm" @click.self="modals.shopping = false">
                 <div class="bg-white w-full sm:w-96 rounded-t-3xl sm:rounded-3xl p-6 pb-8 shadow-2xl">
@@ -633,7 +567,6 @@
             </div>
         </transition>
 
-        <!-- 花費 Modal -->
         <transition name="modal">
             <div v-if="modals.expense" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm" @click.self="modals.expense = false">
                 <div class="bg-white w-full sm:w-96 rounded-t-3xl sm:rounded-3xl p-6 pb-8 shadow-2xl">
@@ -675,7 +608,6 @@
     <script>
         const { createApp, ref, reactive, computed, onMounted, watch, nextTick } = Vue;
 
-        // 初始假資料 (依照需求建立)
         const initialDates = [
             { date: '2026-08-08', dayStr: 'Sat', dayNum: '8', weather: { icon: 'fas fa-sun', temp: '28°', feels: '30°' } },
             { date: '2026-08-09', dayStr: 'Sun', dayNum: '9', weather: { icon: 'fas fa-cloud-sun', temp: '27°', feels: '29°' } },
@@ -686,34 +618,34 @@
         ];
 
         const initialItinerary = {
-            0: [ // 8/8
+            0: [
                 { id: '1', category: 'hotel', name: 'Signature Denbasta Hotel 放行李', time: '08:00', note: '西面站' },
                 { id: '2', category: 'other', name: 'Hotel Aqua Palace 汗蒸幕 睡覺', time: '09:00', note: '補眠休息' },
                 { id: '3', category: 'attraction', name: '鑽石灣遊艇', time: '16:00', note: '看夕陽' }
             ],
-            1: [ // 8/9
+            1: [
                 { id: '4', category: 'attraction', name: 'Skyline luge', time: '10:00', ticket: 'Visit Busan Pass (紫)' },
                 { id: '5', category: 'attraction', name: '釜山樂天世界冒險樂園', time: '13:00', ticket: 'Visit Busan Pass (紫)' },
                 { id: '6', category: 'other', name: 'Spa Land Centum City', time: '18:00', ticket: 'Visit Busan Pass (紫)' }
             ],
-            2: [ // 8/10
+            2: [
                 { id: '7', category: 'attraction', name: '甘川文化村', time: '10:00' },
                 { id: '8', category: 'attraction', name: '松島纜車', time: '14:00', ticket: 'Visit Busan Pass (藍)' },
                 { id: '9', category: 'shopping', name: '南浦站周邊 (BIFF/罐頭/國際市場)', time: '16:00' }
             ],
-            3: [ // 8/11
+            3: [
                 { id: '10', category: 'attraction', name: 'ARTE MUSEUM Busan', time: '10:00', ticket: 'Visit Busan Pass (藍)' },
                 { id: '11', category: 'attraction', name: '白淺灘文化村', time: '14:00' },
                 { id: '12', category: 'food', name: 'Footbath Cafe View', time: '16:00' },
                 { id: '13', category: 'attraction', name: 'Jeoryeong Coastal (絕影海岸隧道)', time: '17:30' }
             ],
-            4: [ // 8/12
+            4: [
                 { id: '14', category: 'attraction', name: '海岸列車 (尾浦站)', time: '10:00', ticket: 'Visit Busan Pass (藍)' },
                 { id: '15', category: 'attraction', name: '膠囊列車 (青沙浦)', time: '11:30' },
                 { id: '16', category: 'attraction', name: 'X the sky', time: '14:00' },
                 { id: '17', category: 'attraction', name: 'Club D Oasis 或 Running man體驗館', time: '16:00' }
             ],
-            5: [ // 8/13
+            5: [
                 { id: '18', category: 'shopping', name: '樂天百貨 (買紀念品)', time: '10:00' },
                 { id: '19', category: 'other', name: '佰诺佰琪皮肤科 (釜山)', time: '14:00', note: '醫美診所' },
                 { id: '20', category: 'flight', name: '金海機場 報到', time: '19:30', note: '22:00 飛機回台灣' }
@@ -732,7 +664,6 @@
 
         createApp({
             setup() {
-                // --- 狀態管理 ---
                 const activeTab = ref('itinerary');
                 const tabs = [
                     { id: 'itinerary', icon: 'fas fa-map-marker-alt' },
@@ -748,10 +679,10 @@
                 const sortableList = ref(null);
                 let sortableInstance = null;
 
-                // 讀取 localStorage 或是使用初始資料
+                // 核心修改 1：加入 JSON.parse(JSON.stringify(...)) 深拷貝，確保預設資料永遠乾淨
                 const loadData = (key, defaultData) => {
                     const saved = localStorage.getItem(`busanApp_${key}`);
-                    return saved ? JSON.parse(saved) : defaultData;
+                    return saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(defaultData));
                 };
 
                 const itineraryData = ref(loadData('itinerary', initialItinerary));
@@ -760,26 +691,21 @@
                 const expenseList = ref(loadData('expense', []));
                 const qrCodes = ref(loadData('qr', []));
 
-                // 監聽資料變化並存入 localStorage
                 watch(itineraryData, (val) => localStorage.setItem('busanApp_itinerary', JSON.stringify(val)), { deep: true });
                 watch(foodList, (val) => localStorage.setItem('busanApp_food', JSON.stringify(val)), { deep: true });
                 watch(shoppingList, (val) => localStorage.setItem('busanApp_shopping', JSON.stringify(val)), { deep: true });
                 watch(expenseList, (val) => localStorage.setItem('busanApp_expense', JSON.stringify(val)), { deep: true });
                 watch(qrCodes, (val) => localStorage.setItem('busanApp_qr', JSON.stringify(val)), { deep: true });
 
-                const currentItinerary = computed(() => {
-                    return itineraryData.value[currentDateIndex.value] || [];
-                });
+                const currentItinerary = computed(() => itineraryData.value[currentDateIndex.value] || []);
                 const currentWeather = computed(() => dates.value[currentDateIndex.value].weather);
 
-                // --- 提醒功能 (Toast) ---
                 const toastMsg = ref('');
                 const showToast = (msg) => {
                     toastMsg.value = msg;
                     setTimeout(() => { toastMsg.value = ''; }, 3000);
                 };
 
-                // 時間推播模擬 (每分鐘檢查)
                 onMounted(() => {
                     setInterval(() => {
                         const now = new Date();
@@ -787,17 +713,13 @@
                         const currentMins = String(now.getMinutes()).padStart(2, '0');
                         const timeString = `${currentHours}:${currentMins}`;
                         
-                        // 簡單模擬：如果時間符合今天行程的某個時間，發送提醒
                         const todayItems = itineraryData.value[currentDateIndex.value] || [];
                         todayItems.forEach(item => {
-                            if(item.time === timeString) {
-                                showToast(`⏰ 時間到了！下一個行程：${item.name}`);
-                            }
+                            if(item.time === timeString) showToast(`⏰ 時間到了！下一個行程：${item.name}`);
                         });
                     }, 60000);
                 });
 
-                // --- 拖曳排序初始化 ---
                 const initSortable = () => {
                     if (sortableInstance) sortableInstance.destroy();
                     if (sortableList.value) {
@@ -806,47 +728,28 @@
                             animation: 150,
                             ghostClass: 'sortable-ghost',
                             onEnd: (evt) => {
-                                // 更新 Vue 陣列順序
-                                const itemEl = evt.item;
                                 const newIndex = evt.newIndex;
                                 const oldIndex = evt.oldIndex;
-                                
                                 const list = [...itineraryData.value[currentDateIndex.value]];
                                 const movedItem = list.splice(oldIndex, 1)[0];
                                 list.splice(newIndex, 0, movedItem);
-                                
                                 itineraryData.value[currentDateIndex.value] = list;
                             }
                         });
                     }
                 };
 
-                watch(currentDateIndex, () => {
-                    nextTick(() => { initSortable(); });
-                });
-                watch(activeTab, (val) => {
-                    if(val === 'itinerary') nextTick(() => { initSortable(); });
-                });
-
-                onMounted(() => {
-                    if(activeTab.value === 'itinerary') initSortable();
-                });
+                watch(currentDateIndex, () => { nextTick(() => { initSortable(); }); });
+                watch(activeTab, (val) => { if(val === 'itinerary') nextTick(() => { initSortable(); }); });
+                onMounted(() => { if(activeTab.value === 'itinerary') initSortable(); });
 
                 const selectDate = (index) => { currentDateIndex.value = index; };
-
-                // --- 導航 ---
-                const openGoogleMaps = (query) => {
-                    window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('釜山 ' + query)}`, '_blank');
-                };
+                const openGoogleMaps = (query) => { window.open(`http://googleusercontent.com/maps.google.com/?q=${encodeURIComponent('釜山 ' + query)}`, '_blank'); };
                 const callNumber = (num) => { window.location.href = `tel:${num}`; };
 
-                // --- Modals 狀態與表單 ---
-                const modals = reactive({
-                    itinerary: false, transit: false, food: false, shopping: false, expense: false
-                });
+                const modals = reactive({ itinerary: false, transit: false, food: false, shopping: false, expense: false });
                 const closeModal = (name) => { modals[name] = false; };
 
-                // --- 行程 CRUD ---
                 const isEditingItinerary = ref(false);
                 const editingItineraryIndex = ref(-1);
                 const formItinerary = reactive({ id: '', category: 'attraction', name: '', time: '10:00', hours: '', ticket: '', note: '' });
@@ -866,15 +769,11 @@
 
                 const saveItinerary = () => {
                     if (!formItinerary.name) { showToast('請輸入名稱'); return; }
+                    if (!itineraryData.value[currentDateIndex.value]) itineraryData.value[currentDateIndex.value] = [];
                     
-                    if (!itineraryData.value[currentDateIndex.value]) {
-                        itineraryData.value[currentDateIndex.value] = [];
-                    }
-
                     if (isEditingItinerary.value) {
                         itineraryData.value[currentDateIndex.value][editingItineraryIndex.value] = { ...formItinerary };
                     } else {
-                        // 簡單的依時間排序插入 (也可以直接 push 讓使用者拖曳)
                         itineraryData.value[currentDateIndex.value].push({ ...formItinerary });
                         itineraryData.value[currentDateIndex.value].sort((a, b) => a.time.localeCompare(b.time));
                     }
@@ -889,20 +788,15 @@
                     }
                 };
 
-                // --- 交通時間編輯 ---
-                const transitTarget = reactive({ dayIndex: 0, itemIndex: 0 }); // index 指向的是下一個行程
+                const transitTarget = reactive({ dayIndex: 0, itemIndex: 0 });
                 const formTransit = reactive({ icon: 'fas fa-walking', timeStr: '步行 10分' });
                 const transitModes = [
-                    { icon: 'fas fa-walking', label: '步行' },
-                    { icon: 'fas fa-bus', label: '大眾運輸' },
-                    { icon: 'fas fa-car', label: '開車/計程車' }
+                    { icon: 'fas fa-walking', label: '步行' }, { icon: 'fas fa-bus', label: '大眾運輸' }, { icon: 'fas fa-car', label: '開車/計程車' }
                 ];
 
                 const editTransit = (dayIdx, itemIdx) => {
                     transitTarget.dayIndex = dayIdx;
                     transitTarget.itemIndex = itemIdx;
-                    // 若是第一天的第一個交通(接航班)，它是特殊處理的，為簡化邏輯這裡先不處理這段的自定義保存，
-                    // 若要嚴謹需存在一個特別的結構裡。這裡為一般 item 的 nextTransit 賦值。
                     if(itemIdx > 0) {
                         const prevItem = itineraryData.value[dayIdx][itemIdx - 1];
                         formTransit.icon = prevItem.nextTransitIcon || 'fas fa-walking';
@@ -918,7 +812,6 @@
                     modals.transit = false;
                 };
 
-                // --- 實用工具函數 ---
                 const getCategoryIcon = (cat) => {
                     const map = {
                         'attraction': 'fas fa-map-marker-alt', 'food': 'fas fa-utensils',
@@ -928,15 +821,11 @@
                     return map[cat] || 'fas fa-circle';
                 };
 
-                // --- 匯率 ---
-                const exchangeRate = ref(0.024); // 假設 1 KRW = 0.024 TWD
+                const exchangeRate = ref(0.024);
                 const krwAmount = ref(10000);
                 const twdAmount = ref(240);
-                const calcExchange = () => {
-                    twdAmount.value = Math.round((krwAmount.value || 0) * exchangeRate.value);
-                };
+                const calcExchange = () => { twdAmount.value = Math.round((krwAmount.value || 0) * exchangeRate.value); };
 
-                // --- 美食 ---
                 const formFood = reactive({ name: '', note: '' });
                 const openAddFoodModal = () => {
                     Object.assign(formFood, { name: '', note: '' });
@@ -948,11 +837,8 @@
                         modals.food = false;
                     }
                 };
-                const deleteFood = (idx) => {
-                    if(confirm('刪除此美食？')) foodList.value.splice(idx, 1);
-                };
+                const deleteFood = (idx) => { if(confirm('刪除此美食？')) foodList.value.splice(idx, 1); };
 
-                // --- 購物清單 (含圖片處理) ---
                 const formShopping = reactive({ id:'', name: '', image: '' });
                 const openAddShoppingModal = () => {
                     Object.assign(formShopping, { id: Date.now(), name: '', image: '' });
@@ -972,11 +858,32 @@
                         modals.shopping = false;
                     }
                 };
-                const deleteShopping = (idx) => {
-                    if(confirm('刪除此物品？')) shoppingList.value.splice(idx, 1);
+                const deleteShopping = (idx) => { if(confirm('刪除此物品？')) shoppingList.value.splice(idx, 1); };
+
+                // 核心修改 2：票券資訊新增「編輯(替換)圖片」邏輯
+                const qrReplaceInput = ref(null);
+                const editingQrIndex = ref(null);
+
+                const triggerReplaceQr = (index) => {
+                    editingQrIndex.value = index;
+                    qrReplaceInput.value.click();
                 };
 
-                // --- 票卷 QR Code ---
+                const handleQrReplace = (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (evt) => {
+                            if (editingQrIndex.value !== null) {
+                                qrCodes.value[editingQrIndex.value].image = evt.target.result;
+                                editingQrIndex.value = null; // 歸零狀態
+                                e.target.value = ''; // 清空 input 以便下次能選同一張圖
+                            }
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                };
+
                 const handleQrUpload = (e) => {
                     const file = e.target.files[0];
                     if (file) {
@@ -990,11 +897,8 @@
                         reader.readAsDataURL(file);
                     }
                 };
-                const deleteQr = (idx) => {
-                    if(confirm('刪除此票卷？')) qrCodes.value.splice(idx, 1);
-                };
+                const deleteQr = (idx) => { if(confirm('刪除此票卷？')) qrCodes.value.splice(idx, 1); };
 
-                // --- 花費 ---
                 const expenseCategories = [
                     { id: 'food', name: '飲食', icon: 'fas fa-utensils', color: 'bg-orange-100 text-orange-500' },
                     { id: 'transport', name: '交通', icon: 'fas fa-bus', color: 'bg-blue-100 text-blue-500' },
@@ -1006,7 +910,7 @@
                 const totalExpenses = computed(() => expenseList.value.reduce((sum, item) => sum + (Number(item.amount) || 0), 0));
                 
                 const openAddExpenseModal = () => {
-                    const today = new Date().toISOString().split('T')[0]; // Auto date
+                    const today = new Date().toISOString().split('T')[0];
                     Object.assign(formExpense, { id: Date.now(), category: 'food', name: '', amount: '', date: today, method: 'cash' });
                     modals.expense = true;
                 };
@@ -1016,9 +920,7 @@
                         modals.expense = false;
                     }
                 };
-                const deleteExpense = (idx) => {
-                    if(confirm('刪除此花費記錄？')) expenseList.value.splice(idx, 1);
-                };
+                const deleteExpense = (idx) => { if(confirm('刪除此花費記錄？')) expenseList.value.splice(idx, 1); };
                 const getExpenseIcon = (catId) => expenseCategories.find(c => c.id === catId)?.icon || 'fas fa-circle';
                 const getExpenseColor = (catId) => expenseCategories.find(c => c.id === catId)?.color || 'bg-slate-100';
 
@@ -1027,19 +929,16 @@
                     openGoogleMaps, callNumber,
                     sortableList, getCategoryIcon,
                     modals, closeModal, showToast, toastMsg,
-                    // 行程
                     formItinerary, isEditingItinerary, openAddItineraryModal, editItineraryItem, saveItinerary, confirmDeleteItinerary,
-                    // 交通
                     transitModes, formTransit, editTransit, saveTransit,
-                    // 匯率
                     exchangeRate, krwAmount, twdAmount, calcExchange,
-                    // 美食
                     foodList, formFood, openAddFoodModal, saveFood, deleteFood,
-                    // 購物
                     shoppingList, formShopping, openAddShoppingModal, handleShopUpload, saveShopping, deleteShopping,
-                    // 票卷
+                    
+                    // 票卷新增的回傳
                     qrCodes, handleQrUpload, deleteQr,
-                    // 花費
+                    qrReplaceInput, triggerReplaceQr, handleQrReplace,
+                    
                     expenseList, expenseCategories, formExpense, totalExpenses, openAddExpenseModal, saveExpense, deleteExpense, getExpenseIcon, getExpenseColor
                 };
             }
