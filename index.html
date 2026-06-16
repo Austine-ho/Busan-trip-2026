@@ -214,13 +214,17 @@
                     </div>
                     <div class="flex items-center justify-between gap-4">
                         <div class="flex-1 relative">
-                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₩</span>
-                            <input type="number" v-model.number="krwAmount" class="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 pl-8 pr-3 text-right focus:outline-none focus:border-blue-300" placeholder="韓元">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">{{ isKrwToTwd ? '₩' : 'NT$' }}</span>
+                            <input type="number" v-model.number="exchangeAmount" class="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 pl-8 pr-3 text-right focus:outline-none focus:border-blue-300" :placeholder="isKrwToTwd ? '韓元' : '台幣'">
                         </div>
-                        <i class="fas fa-chevron-right text-slate-300"></i>
+                        
+                        <button @click="toggleExchangeDirection" class="w-8 h-8 rounded-full bg-slate-50 hover:bg-blue-50 flex items-center justify-center transition-colors shadow-sm border border-slate-200 active:scale-95 shrink-0 group">
+                            <i class="fas fa-exchange-alt text-slate-400 group-hover:text-blue-500 transition-colors"></i>
+                        </button>
+
                         <div class="flex-1 relative">
-                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">NT$</span>
-                            <div class="w-full bg-slate-100 border border-transparent rounded-xl py-3 pl-8 pr-3 text-right font-bold text-blue-600">{{ computedTwdAmount }}</div>
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">{{ isKrwToTwd ? 'NT$' : '₩' }}</span>
+                            <div class="w-full bg-slate-100 border border-transparent rounded-xl py-3 pl-8 pr-3 text-right font-bold text-blue-600">{{ computedConvertedAmount }}</div>
                         </div>
                     </div>
                     <div class="flex items-center justify-end gap-2 mt-4 text-xs text-slate-500">
@@ -489,7 +493,10 @@
                         <div class="flex-1 min-w-0">
                             <div class="flex justify-between items-start">
                                 <h3 class="font-bold text-slate-800 truncate">{{ exp.name }}</h3>
-                                <span class="font-bold text-slate-800">₩{{ exp.amount.toLocaleString() }}</span>
+                                <div class="text-right">
+                                    <div class="font-bold text-slate-800">₩{{ exp.amount.toLocaleString() }}</div>
+                                    <div class="text-[10px] text-slate-400 mt-0.5">約 NT$ {{ Math.round(exp.amount * exchangeRate).toLocaleString() }}</div>
+                                </div>
                             </div>
                             <div class="flex justify-between items-center mt-1">
                                 <div class="text-xs text-slate-400">{{ exp.date }} · {{ exp.method === 'cash' ? '現金' : '信用卡' }}</div>
@@ -699,9 +706,17 @@
                         </div>
                         <input v-model="formExpense.name" type="text" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-400" placeholder="項目名稱">
                         
-                        <div class="relative">
-                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₩</span>
-                            <input v-model.number="formExpense.amount" type="number" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 pl-10 focus:outline-none focus:border-blue-400" placeholder="金額">
+                        <!-- 修改的部分：韓幣與台幣雙向輸入框 -->
+                        <div class="flex items-center gap-2">
+                            <div class="relative flex-1">
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₩</span>
+                                <input v-model.number="formExpense.amount" type="number" class="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-8 pr-2 focus:outline-none focus:border-blue-400" placeholder="韓元">
+                            </div>
+                            <i class="fas fa-exchange-alt text-slate-300 text-xs"></i>
+                            <div class="relative flex-1">
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">NT$</span>
+                                <input v-model.number="formExpenseTwd" type="number" class="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-10 pr-2 focus:outline-none focus:border-blue-400" placeholder="台幣">
+                            </div>
                         </div>
                         
                         <div class="flex gap-4">
@@ -738,7 +753,6 @@
                         let width = img.width;
                         let height = img.height;
 
-                        // 計算等比例縮小後的長寬
                         if (width > height) {
                             if (width > maxWidth) {
                                 height = Math.round((height *= maxWidth / width));
@@ -756,13 +770,11 @@
                         canvas.height = height;
                         const ctx = canvas.getContext('2d');
                         
-                        // 填滿白底，避免透明 PNG 壓縮成 JPEG 變黑
                         ctx.fillStyle = '#FFFFFF';
                         ctx.fillRect(0, 0, width, height);
                         
                         ctx.drawImage(img, 0, 0, width, height);
 
-                        // 轉出為 JPEG 格式（降低檔案大小）
                         resolve(canvas.toDataURL('image/jpeg', quality));
                     };
                     img.onerror = error => reject(error);
@@ -771,7 +783,6 @@
             });
         };
 
-        // 供無天氣API時的假資料備用
         const dummyWeather = [
             { icon: 'fas fa-sun', temp: '28°', feels: '30°' }, { icon: 'fas fa-cloud-sun', temp: '27°', feels: '29°' },
             { icon: 'fas fa-sun', temp: '29°', feels: '31°' }, { icon: 'fas fa-cloud', temp: '26°', feels: '28°' },
@@ -829,9 +840,19 @@
                 const checklist = ref(loadData('checklist', initialChecklist));
 
                 const exchangeRate = ref(Number(localStorage.getItem('busanApp_exchangeRate')) || 0.024);
-                const krwAmount = ref(10000);
+                const exchangeAmount = ref(10000); 
+                const isKrwToTwd = ref(true);
+                
+                const toggleExchangeDirection = () => {
+                    isKrwToTwd.value = !isKrwToTwd.value;
+                };
 
-                const computedTwdAmount = computed(() => Math.round((krwAmount.value || 0) * exchangeRate.value).toLocaleString());
+                const computedConvertedAmount = computed(() => {
+                    const amount = exchangeAmount.value || 0;
+                    return isKrwToTwd.value
+                        ? Math.round(amount * exchangeRate.value).toLocaleString()
+                        : Math.round(amount / exchangeRate.value).toLocaleString();
+                });
 
                 watch(tripInfo, (val) => localStorage.setItem('busanApp_tripInfo', JSON.stringify(val)), { deep: true });
                 watch(itineraryData, (val) => localStorage.setItem('busanApp_itinerary', JSON.stringify(val)), { deep: true });
@@ -890,7 +911,6 @@
                         sortableInstance = new Sortable(sortableList.value, {
                             handle: '.drag-handle', animation: 150, ghostClass: 'sortable-ghost',
                             onEnd: (evt) => {
-                                // 修正: 確保拖曳排序後也能確實更新並手動儲存
                                 const list = [...itineraryData.value[currentDateIndex.value]];
                                 const movedItem = list.splice(evt.oldIndex, 1)[0];
                                 list.splice(evt.newIndex, 0, movedItem);
@@ -948,7 +968,6 @@
                     modals.itinerary = true;
                 };
 
-                // ===== 修正: 編輯行程後強制更新與手動儲存 =====
                 const saveItinerary = () => {
                     if (!formItinerary.name) { showToast('請輸入名稱'); return; }
                     if (!itineraryData.value[currentDateIndex.value]) itineraryData.value[currentDateIndex.value] = [];
@@ -964,13 +983,11 @@
                     currentList.sort((a, b) => a.time.localeCompare(b.time));
                     itineraryData.value[currentDateIndex.value] = currentList;
                     
-                    // 強制手動保底寫入 LocalStorage
                     localStorage.setItem('busanApp_itinerary', JSON.stringify(itineraryData.value));
                     
                     closeModal('itinerary');
                 };
 
-                // ===== 修正: 刪除行程後強制更新與手動儲存 =====
                 const confirmDeleteItinerary = () => {
                     if (confirm(`確定要刪除「${formItinerary.name}」嗎？`)) {
                         const currentList = [...itineraryData.value[currentDateIndex.value]];
@@ -998,7 +1015,6 @@
                     }
                 };
                 
-                // ===== 修正: 變更交通方式後強制更新與手動儲存 =====
                 const saveTransit = () => {
                     if(transitTarget.itemIndex > 0) {
                         const dayIdx = transitTarget.dayIndex;
@@ -1030,7 +1046,6 @@
                 const formShopping = reactive({ id:'', name: '', image: '' });
                 const openAddShoppingModal = () => { Object.assign(formShopping, { id: Date.now(), name: '', image: '' }); modals.shopping = true; };
                 
-                // 上傳前壓縮圖片 (購物清單)
                 const handleShopUpload = async (e) => { 
                     const f = e.target.files[0]; 
                     if (f) { 
@@ -1050,7 +1065,6 @@
                 const editingQrIndex = ref(null);
                 const triggerReplaceQr = (index) => { editingQrIndex.value = index; qrReplaceInput.value.click(); };
                 
-                // 上傳前壓縮圖片 (替換 QR Code)
                 const handleQrReplace = async (e) => {
                     const file = e.target.files[0];
                     if (file) {
@@ -1067,7 +1081,6 @@
                     }
                 };
 
-                // 上傳前壓縮圖片 (新增 QR Code)
                 const handleQrUpload = async (e) => {
                     const file = e.target.files[0];
                     if (file) {
@@ -1104,9 +1117,20 @@
                     { id: 'ticket', name: '門票', icon: 'fas fa-ticket-alt', color: 'bg-purple-100 text-purple-500' },
                     { id: 'other', name: '其他', icon: 'fas fa-ellipsis-h', color: 'bg-slate-100 text-slate-500' }
                 ];
+                
                 const formExpense = reactive({ id: '', category: 'food', name: '', amount: '', date: '', method: 'cash' });
                 const totalExpenses = computed(() => expenseList.value.reduce((sum, item) => sum + (Number(item.amount) || 0), 0));
                 
+                // 新增: 台幣雙向綁定邏輯
+                const formExpenseTwd = computed({
+                    get() {
+                        return (typeof formExpense.amount === 'number' && formExpense.amount !== 0) ? Math.round(formExpense.amount * exchangeRate.value) : '';
+                    },
+                    set(val) {
+                        formExpense.amount = (typeof val === 'number' && val !== 0) ? Math.round(val / exchangeRate.value) : '';
+                    }
+                });
+
                 const openAddExpenseModal = () => {
                     const today = new Date().toISOString().split('T')[0];
                     Object.assign(formExpense, { id: Date.now(), category: 'food', name: '', amount: '', date: today, method: 'cash' });
@@ -1126,11 +1150,11 @@
                     modals, closeModal, showToast, toastMsg,
                     formItinerary, isEditingItinerary, openAddItineraryModal, editItineraryItem, saveItinerary, confirmDeleteItinerary,
                     transitModes, formTransit, editTransit, saveTransit,
-                    exchangeRate, krwAmount, computedTwdAmount,
+                    exchangeRate, exchangeAmount, computedConvertedAmount, isKrwToTwd, toggleExchangeDirection,
                     foodList, formFood, openAddFoodModal, saveFood, deleteFood,
                     shoppingList, formShopping, openAddShoppingModal, handleShopUpload, saveShopping, deleteShopping,
                     qrCodes, handleQrUpload, deleteQr, qrReplaceInput, triggerReplaceQr, handleQrReplace, calculateExpiry,
-                    expenseList, expenseCategories, formExpense, totalExpenses, openAddExpenseModal, saveExpense, deleteExpense, getExpenseIcon, getExpenseColor
+                    expenseList, expenseCategories, formExpense, formExpenseTwd, totalExpenses, openAddExpenseModal, saveExpense, deleteExpense, getExpenseIcon, getExpenseColor
                 };
             }
         }).mount('#app');
