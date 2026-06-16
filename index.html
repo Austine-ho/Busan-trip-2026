@@ -321,7 +321,7 @@
             <!-- ====== 3. 票卷資訊 ====== -->
             <div v-show="activeTab === 'tickets'" class="p-5 space-y-4">
                 <div class="card-minimal overflow-hidden relative">
-                    <img src="ticket.png" alt="Visit Busan Pass" class="w-full h-auto">
+                    <img src="ticket.png" alt="Visit Busan Pass" class="w-full h-auto" onerror="this.style.display='none'">
                     <a href="https://www.visitbusanpass.com/" target="_blank" class="absolute bottom-3 right-3 bg-white/90 backdrop-blur text-blue-600 text-xs font-bold px-3 py-1.5 rounded-full shadow-lg border border-white/50 flex items-center gap-1 hover:bg-blue-50 transition">
                         <i class="fas fa-external-link-alt"></i> 官網查詢
                     </a>
@@ -726,6 +726,51 @@
     <script>
         const { createApp, ref, reactive, computed, onMounted, watch, nextTick } = Vue;
 
+        // --- 圖片壓縮共用函數 ---
+        const compressImage = (file, maxWidth = 800, maxHeight = 800, quality = 0.7) => {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = event => {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = () => {
+                        let width = img.width;
+                        let height = img.height;
+
+                        // 計算等比例縮小後的長寬
+                        if (width > height) {
+                            if (width > maxWidth) {
+                                height = Math.round((height *= maxWidth / width));
+                                width = maxWidth;
+                            }
+                        } else {
+                            if (height > maxHeight) {
+                                width = Math.round((width *= maxHeight / height));
+                                height = maxHeight;
+                            }
+                        }
+
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        
+                        // 填滿白底，避免透明 PNG 壓縮成 JPEG 變黑
+                        ctx.fillStyle = '#FFFFFF';
+                        ctx.fillRect(0, 0, width, height);
+                        
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        // 轉出為 JPEG 格式（降低檔案大小）
+                        resolve(canvas.toDataURL('image/jpeg', quality));
+                    };
+                    img.onerror = error => reject(error);
+                };
+                reader.onerror = error => reject(error);
+            });
+        };
+
         // 供無天氣API時的假資料備用
         const dummyWeather = [
             { icon: 'fas fa-sun', temp: '28°', feels: '30°' }, { icon: 'fas fa-cloud-sun', temp: '27°', feels: '29°' },
@@ -845,10 +890,12 @@
                         sortableInstance = new Sortable(sortableList.value, {
                             handle: '.drag-handle', animation: 150, ghostClass: 'sortable-ghost',
                             onEnd: (evt) => {
+                                // 修正: 確保拖曳排序後也能確實更新並手動儲存
                                 const list = [...itineraryData.value[currentDateIndex.value]];
                                 const movedItem = list.splice(evt.oldIndex, 1)[0];
                                 list.splice(evt.newIndex, 0, movedItem);
                                 itineraryData.value[currentDateIndex.value] = list;
+                                localStorage.setItem('busanApp_itinerary', JSON.stringify(itineraryData.value));
                             }
                         });
                     }
@@ -901,21 +948,37 @@
                     modals.itinerary = true;
                 };
 
+                // ===== 修正: 編輯行程後強制更新與手動儲存 =====
                 const saveItinerary = () => {
                     if (!formItinerary.name) { showToast('請輸入名稱'); return; }
                     if (!itineraryData.value[currentDateIndex.value]) itineraryData.value[currentDateIndex.value] = [];
+                    
+                    const currentList = [...itineraryData.value[currentDateIndex.value]];
+                    
                     if (isEditingItinerary.value) {
-                        itineraryData.value[currentDateIndex.value][editingItineraryIndex.value] = { ...formItinerary };
+                        currentList[editingItineraryIndex.value] = { ...formItinerary };
                     } else {
-                        itineraryData.value[currentDateIndex.value].push({ ...formItinerary });
-                        itineraryData.value[currentDateIndex.value].sort((a, b) => a.time.localeCompare(b.time));
+                        currentList.push({ ...formItinerary });
                     }
+                    
+                    currentList.sort((a, b) => a.time.localeCompare(b.time));
+                    itineraryData.value[currentDateIndex.value] = currentList;
+                    
+                    // 強制手動保底寫入 LocalStorage
+                    localStorage.setItem('busanApp_itinerary', JSON.stringify(itineraryData.value));
+                    
                     closeModal('itinerary');
                 };
 
+                // ===== 修正: 刪除行程後強制更新與手動儲存 =====
                 const confirmDeleteItinerary = () => {
                     if (confirm(`確定要刪除「${formItinerary.name}」嗎？`)) {
-                        itineraryData.value[currentDateIndex.value].splice(editingItineraryIndex.value, 1);
+                        const currentList = [...itineraryData.value[currentDateIndex.value]];
+                        currentList.splice(editingItineraryIndex.value, 1);
+                        itineraryData.value[currentDateIndex.value] = currentList;
+                        
+                        localStorage.setItem('busanApp_itinerary', JSON.stringify(itineraryData.value));
+                        
                         closeModal('itinerary');
                         showToast('已刪除行程');
                     }
@@ -934,10 +997,22 @@
                         modals.transit = true;
                     }
                 };
+                
+                // ===== 修正: 變更交通方式後強制更新與手動儲存 =====
                 const saveTransit = () => {
                     if(transitTarget.itemIndex > 0) {
-                        itineraryData.value[transitTarget.dayIndex][transitTarget.itemIndex - 1].nextTransitIcon = formTransit.icon;
-                        itineraryData.value[transitTarget.dayIndex][transitTarget.itemIndex - 1].nextTransitTime = formTransit.timeStr;
+                        const dayIdx = transitTarget.dayIndex;
+                        const itemIdx = transitTarget.itemIndex - 1;
+                        
+                        const currentList = [...itineraryData.value[dayIdx]];
+                        currentList[itemIdx] = {
+                            ...currentList[itemIdx],
+                            nextTransitIcon: formTransit.icon,
+                            nextTransitTime: formTransit.timeStr
+                        };
+                        
+                        itineraryData.value[dayIdx] = currentList;
+                        localStorage.setItem('busanApp_itinerary', JSON.stringify(itineraryData.value));
                     }
                     modals.transit = false;
                 };
@@ -947,7 +1022,6 @@
                     return map[cat] || 'fas fa-circle';
                 };
 
-                // 其他模組...
                 const formFood = reactive({ name: '', note: '' });
                 const openAddFoodModal = () => { Object.assign(formFood, { name: '', note: '' }); modals.food = true; };
                 const saveFood = () => { if (formFood.name) { foodList.value.unshift({ ...formFood }); modals.food = false; } };
@@ -955,39 +1029,58 @@
 
                 const formShopping = reactive({ id:'', name: '', image: '' });
                 const openAddShoppingModal = () => { Object.assign(formShopping, { id: Date.now(), name: '', image: '' }); modals.shopping = true; };
-                const handleShopUpload = (e) => { const f = e.target.files[0]; if (f) { const r = new FileReader(); r.onload = (evt) => formShopping.image = evt.target.result; r.readAsDataURL(f); } };
+                
+                // 上傳前壓縮圖片 (購物清單)
+                const handleShopUpload = async (e) => { 
+                    const f = e.target.files[0]; 
+                    if (f) { 
+                        try {
+                            const compressedBase64 = await compressImage(f, 800, 800, 0.7);
+                            formShopping.image = compressedBase64;
+                        } catch (error) {
+                            showToast("圖片處理失敗，請重試");
+                        }
+                    } 
+                };
+                
                 const saveShopping = () => { if (formShopping.name || formShopping.image) { shoppingList.value.push({ ...formShopping }); modals.shopping = false; } };
                 const deleteShopping = (idx) => { if(confirm('刪除此物品？')) shoppingList.value.splice(idx, 1); };
 
                 const qrReplaceInput = ref(null);
                 const editingQrIndex = ref(null);
                 const triggerReplaceQr = (index) => { editingQrIndex.value = index; qrReplaceInput.value.click(); };
-                const handleQrReplace = (e) => {
+                
+                // 上傳前壓縮圖片 (替換 QR Code)
+                const handleQrReplace = async (e) => {
                     const file = e.target.files[0];
                     if (file) {
-                        const reader = new FileReader();
-                        reader.onload = (evt) => {
+                        try {
+                            const compressedBase64 = await compressImage(file, 800, 800, 0.7);
                             if (editingQrIndex.value !== null) {
-                                qrCodes.value[editingQrIndex.value].image = evt.target.result;
-                                editingQrIndex.value = null; e.target.value = '';
+                                qrCodes.value[editingQrIndex.value].image = compressedBase64;
+                                editingQrIndex.value = null; 
+                                e.target.value = '';
                             }
-                        };
-                        reader.readAsDataURL(file);
+                        } catch (error) {
+                            showToast('圖片替換失敗');
+                        }
                     }
                 };
 
-                const handleQrUpload = (e) => {
+                // 上傳前壓縮圖片 (新增 QR Code)
+                const handleQrUpload = async (e) => {
                     const file = e.target.files[0];
                     if (file) {
-                        const reader = new FileReader();
-                        reader.onload = (evt) => {
+                        try {
+                            const compressedBase64 = await compressImage(file, 800, 800, 0.7);
                             qrCodes.value.push({
-                                id: Date.now(), name: '我的通行證', image: evt.target.result,
-                                passType: 'big5', activationTime: '', // 預設為 BIG 5
+                                id: Date.now(), name: '我的通行證', image: compressedBase64,
+                                passType: 'big5', activationTime: '',
                                 purple1: false, purple2: false, blue1: false, blue2: false, blue3: false
                             });
-                        };
-                        reader.readAsDataURL(file);
+                        } catch (error) {
+                            showToast('圖片上傳失敗');
+                        }
                     }
                 };
                 const deleteQr = (idx) => { if(confirm('刪除此票卷？')) qrCodes.value.splice(idx, 1); };
