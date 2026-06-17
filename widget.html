@@ -460,7 +460,7 @@ function showBubble(text) {
   (function renderSuggestions() {
     const box = document.getElementById('suggestions');
     if (!box) return;
-    const SUGGESTIONS = ['景點', '美食', '禮儀', '歷史', '季節', '逛街', ];
+    const SUGGESTIONS = ['美食', '禮儀', '歷史', '季節', '逛街', ];
     const label = document.createElement('div'); label.className = 'sg-label'; label.textContent = '💬 你可以問我：';
     box.appendChild(label);
     SUGGESTIONS.forEach((s) => {
