@@ -446,7 +446,7 @@
     onTap._lock = true;
     setTimeout(() => { onTap._lock = false; }, 400);
     if (model) try { model.motion('Tap'); } catch (e) {}
-    speak('你好～我是可以嵌入任何網站的語音虛擬人，問我怎麼安裝、怎麼換成你的角色都行！');
+    speak('安安你好～可以問我釜山相關資訊！');
   }
 
   // ===== 控制列 =====
@@ -456,7 +456,7 @@
   (function renderSuggestions() {
     const box = document.getElementById('suggestions');
     if (!box) return;
-    const SUGGESTIONS = ['怎麼安裝？', '怎麼換成我的角色？', '要不要錢？', '麥克風怎麼用？', '我可以說什麼？'];
+    const SUGGESTIONS = ['推薦必去景點？', '釜山必吃美食？',	];
     const label = document.createElement('div'); label.className = 'sg-label'; label.textContent = '💬 你可以問我：';
     box.appendChild(label);
     SUGGESTIONS.forEach((s) => {
