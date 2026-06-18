@@ -185,11 +185,22 @@
     // 注意：不接受用 postMessage 遠端啟動麥克風（listen），避免惡意父頁偷開麥；麥克風只由使用者點擊觸發
   });
 
-  function showBubble(text) {
+function showBubble(text) {
     const b = document.getElementById('bubble');
-    b.textContent = text; b.classList.add('show');
+    b.textContent = text; 
+    b.classList.add('show');
+    
+    // 清除上一個倒數計時
     clearTimeout(showBubble._t);
-    showBubble._t = setTimeout(() => b.classList.remove('show'), 6000);
+    
+    // 計算顯示時間：基本 6000ms (6秒) + (文字長度 × 100ms)
+    // 例如：10 個字的句子，顯示時間為 6000 + 1000 = 7000ms (7秒)
+    const duration = 6000 + (text.length * 100);
+    
+    // 設定新的消失計時
+    showBubble._t = setTimeout(() => {
+      b.classList.remove('show');
+    }, duration); 
   }
 
   // ===== TTS：開口說話 + 對嘴 =====
